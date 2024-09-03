@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using my_books.ActionResults;
 using my_books.Data.Models;
 using my_books.Data.Services;
 using my_books.Data.ViewModels;
+using my_books.Data.ViewModels.Authentication;
 using my_books.Exceptions;
 using System;
 using System.Collections.Generic;
@@ -14,13 +17,16 @@ namespace my_books.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = UserRoles.Publisher + "," + UserRoles.Admin)]
     public class PublishersController : ControllerBase
     {
         private readonly PublishersService publishersService;
+        private readonly ILogger<PublishersController> logger;
 
-        public PublishersController(PublishersService publishersService)
+        public PublishersController(PublishersService publishersService, ILogger<PublishersController> logger)
         {
             this.publishersService = publishersService;
+            this.logger = logger;
         }
 
        [HttpPost("add-publisher")]
@@ -87,12 +93,13 @@ namespace my_books.Controllers
         {
             try
             {
+                logger.LogInformation("This is just a log in GetAllPublishers");
                 var _publisers = publishersService.GetAllPublishers(sortBy, searchString, pageNumber);
                 return Ok(_publisers);
             }
             catch (Exception ex)
             {
-                return BadRequest("Sorry, we could not load the publishers");
+                return BadRequest("Sorry, we could not load the publishers" + ex.Message);
             }
         }
 
